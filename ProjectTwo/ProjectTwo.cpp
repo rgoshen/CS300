@@ -6,30 +6,33 @@ using namespace std;
 
 /**
  * Prompts user for filename and validates file exists
- * Returns the filename if valid, exits program if invalid
+ * Keeps asking until a valid file is provided
+ * Returns the filename when valid file is found
  */
 string getValidFilename() {
     string filename;
 
-    cout << "Enter filename: ";
-    getline(cin, filename);
+    while (true) {
+        cout << "Enter filename: ";
+        getline(cin, filename);
 
-    // Check if filename is empty
-    if (filename.empty()) {
-        cout << "Error: Filename cannot be empty" << endl;
-        exit(1);
+        // Check if filename is empty
+        if (filename.empty()) {
+            cout << "Error: Filename cannot be empty" << endl;
+            continue; // Ask again
+        }
+
+        // Try to open file to validate it exists
+        ifstream file(filename);
+        if (!file.is_open()) {
+            cout << "Error: Cannot open file '" << filename << "'" << endl;
+            continue; // Ask again
+        }
+
+        file.close();
+        cout << "File '" << filename << "' found successfully!" << endl;
+        return filename; // Only return when valid file found
     }
-
-    // Try to open file to validate it exists
-    ifstream file(filename);
-    if (!file.is_open()) {
-        cout << "Error: Cannot open file '" << filename << "'" << endl;
-        exit(1);
-    }
-
-    file.close();
-    cout << "File '" << filename << "' found successfully!" << endl;
-    return filename;
 }
 
 int main() {
@@ -39,6 +42,10 @@ int main() {
     string filename = getValidFilename();
 
     cout << "Ready to process file: " << filename << endl;
+    cout << "\nFile input successful! Press Enter to continue...";
+    cin.get(); // Wait for user to press Enter
+
+    cout << "Program will continue with file processing in next iteration." << endl;
 
     return 0;
 }
