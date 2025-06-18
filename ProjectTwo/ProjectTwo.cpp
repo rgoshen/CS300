@@ -1,8 +1,37 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 
 using namespace std;
+
+/**
+ * Course Structure
+ * Contains course number, name, and list of prerequisites
+ */
+struct Course {
+    string courseNumber;          // Unique identifier (e.g., "CSCI100")
+    string name;                  // Full course name
+    vector<string> prerequisites; // List of prerequisite course numbers
+};
+
+/**
+ * Hash table node structure for chaining collision resolution
+ */
+struct HashNode {
+    Course course;             // Course object containing course data
+    HashNode* next;            // Pointer to next node in chain (for collisions)
+};
+
+/**
+ * Hash table structure with dynamic resizing capability
+ */
+struct HashTable {
+    vector<HashNode*> buckets; // Array of pointers to hash nodes
+    int size;                  // Current number of courses stored
+    int capacity;              // Current number of buckets
+    double maxLoadFactor;      // Maximum load factor before resize (0.7)
+};
 
 /**
  * Trims leading/trailing whitespace and quotes from filename
