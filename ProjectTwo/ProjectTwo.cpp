@@ -138,6 +138,31 @@ bool parseLine(string line, vector<string>& tokens) {
 }
 
 /**
+ * Function: Validate Line Format
+ * Purpose: Ensures each line has minimum required fields
+ * Input: tokens - parsed line tokens, originalLine - for error reporting
+ * Output: true if line format is valid, false otherwise
+ */
+bool validateLineFormat(vector<string> tokens, string originalLine) {
+    if (tokens.size() < 2) {
+        cout << "Error: Line '" << originalLine << "' does not have minimum required parameters" << endl;
+        return false;
+    }
+
+    if (tokens[0].empty()) {
+        cout << "Error: Course number cannot be empty" << endl;
+        return false;
+    }
+
+    if (tokens[1].empty()) {
+        cout << "Error: Course name cannot be empty" << endl;
+        return false;
+    }
+
+    return true;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -261,10 +286,12 @@ void menuOption1(const string& filename) {
     if (readFileLines(filename, lines)) {
         cout << "File read successfully!" << endl;
         cout << "Number of lines read: " << lines.size() << endl;
-        cout << "\nParsing CSV data:" << endl;
-        cout << "=================" << endl;
+        cout << "\nParsing and validating CSV data:" << endl;
+        cout << "=================================" << endl;
 
-        // Test parsing each line
+        bool allLinesValid = true;
+
+        // Test parsing and validation for each line
         for (int i = 0; i < lines.size(); i++) {
             cout << "\nLine " << (i + 1) << ": " << lines[i] << endl;
 
@@ -274,13 +301,31 @@ void menuOption1(const string& filename) {
                 for (int j = 0; j < tokens.size(); j++) {
                     cout << "    Token " << j << ": '" << tokens[j] << "'" << endl;
                 }
+
+                // Test validation
+                if (validateLineFormat(tokens, lines[i])) {
+                    cout << "  VALID: Line format is correct" << endl;
+                }
+                else {
+                    cout << "  INVALID: Line format has errors" << endl;
+                    allLinesValid = false;
+                }
             }
             else {
                 cout << "  ERROR: Failed to parse this line" << endl;
+                allLinesValid = false;
             }
         }
 
-        // TODO: Validate file format and load into hash table
+        cout << "\n==================================" << endl;
+        if (allLinesValid) {
+            cout << "SUCCESS: All lines passed format validation!" << endl;
+        }
+        else {
+            cout << "ERROR: Some lines failed validation" << endl;
+        }
+
+        // TODO: Validate prerequisites and load into hash table
         cout << "\nData structure loaded with file: " << filename << endl;
     }
     else {
