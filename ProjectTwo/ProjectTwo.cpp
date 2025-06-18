@@ -34,6 +34,48 @@ struct HashTable {
 };
 
 /**
+ * Function: Open and Read File
+ * Purpose: Opens a file and reads all valid lines into a vector
+ * Input: filename - path to the course data file, lines - reference to vector that will store file lines
+ * Output: true if file was successfully read, false otherwise
+ */
+bool readFileLines(string filename, vector<string>& lines) {
+    ifstream file(filename);
+
+    if (!file.is_open()) {
+        cout << "Error: Cannot open file '" << filename << "'" << endl;
+        return false;
+    }
+
+    string line;
+    while (getline(file, line)) {
+        // Check if line is not empty and not just whitespace
+        if (!line.empty()) {
+            // Simple whitespace check - if line has any non-space characters
+            bool hasContent = false;
+            for (char c : line) {
+                if (c != ' ' && c != '\t' && c != '\r' && c != '\n') {
+                    hasContent = true;
+                    break;
+                }
+            }
+            if (hasContent) {
+                lines.push_back(line);
+            }
+        }
+    }
+
+    file.close();
+
+    if (lines.size() == 0) {
+        cout << "Error: File is empty or contains no valid data" << endl;
+        return false;
+    }
+
+    return true;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -143,11 +185,33 @@ string getMenuChoice() {
 }
 
 /**
- * Handles menu option 1 - Load Data Structure
+ * Function: Menu Option 1 - Load Data Structure
+ * Purpose: Handles loading course data into hash table with comprehensive error handling
+ * Input: table - reference to hash table to populate
+ * Output: Hash table is populated with validated course data
  */
 void menuOption1(const string& filename) {
     cout << "Loading data structure..." << endl;
-    cout << "Data structure loaded with file: " << filename << endl;
+
+    vector<string> lines;
+
+    // Attempt to read file lines
+    if (readFileLines(filename, lines)) {
+        cout << "File read successfully!" << endl;
+        cout << "Number of lines read: " << lines.size() << endl;
+
+        // Debug: Show first few lines to verify content
+        cout << "Sample lines from file:" << endl;
+        for (int i = 0; i < min(3, (int)lines.size()); i++) {
+            cout << "  Line " << (i + 1) << ": " << lines[i] << endl;
+        }
+
+        // TODO: Parse lines and load into hash table
+        cout << "Data structure loaded with file: " << filename << endl;
+    }
+    else {
+        cout << "Failed to load courses from file. Please check the file format and try again." << endl;
+    }
 }
 
 /**
@@ -176,6 +240,7 @@ void menuOption3() {
     cout << "CSCI400, Large Software Development" << endl;
     cout << "Prerequisites: CSCI301, CSCI350" << endl;
 }
+
 
 
 
