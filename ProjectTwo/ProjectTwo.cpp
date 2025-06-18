@@ -86,6 +86,70 @@ string getValidFilename() {
     }
 }
 
+/**
+ * Displays the main menu options
+ */
+void displayMenu() {
+    cout << "1. Load Data Structure." << endl;
+    cout << "2. Print Course List." << endl;
+    cout << "3. Print Course." << endl;
+    cout << "9. Exit" << endl;
+    cout << "What would you like to do? ";
+}
+
+/**
+ * Validates menu choice input
+ */
+bool isValidMenuChoice(const string& choice) {
+    return (choice == "1" || choice == "2" || choice == "3" || choice == "9");
+}
+
+/**
+ * Gets and validates menu choice from user
+ */
+string getMenuChoice() {
+    string choice;
+    getline(cin, choice);
+    return choice;
+}
+
+/**
+ * Handles menu option 1 - Load Data Structure
+ */
+void menuOption1(const string& filename) {
+    cout << "Loading data structure..." << endl;
+    cout << "Data structure loaded with file: " << filename << endl;
+}
+
+/**
+ * Handles menu option 2 - Print Course List
+ */
+void menuOption2() {
+    cout << "Here is a sample schedule:" << endl;
+    cout << "CSCI100, Introduction to Computer Science" << endl;
+    cout << "CSCI101, Introduction to Programming in C++" << endl;
+    cout << "CSCI200, Data Structures" << endl;
+    cout << "CSCI301, Advanced Programming in C++" << endl;
+    cout << "CSCI300, Introduction to Algorithms" << endl;
+    cout << "CSCI350, Operating Systems" << endl;
+    cout << "CSCI400, Large Software Development" << endl;
+    cout << "MATH201, Discrete Mathematics" << endl;
+}
+
+/**
+ * Handles menu option 3 - Print Course
+ */
+void menuOption3() {
+    string courseNumber;
+    cout << "What course do you want to know about? ";
+    getline(cin, courseNumber);
+
+    cout << "CSCI400, Large Software Development" << endl;
+    cout << "Prerequisites: CSCI301, CSCI350" << endl;
+}
+
+
+
 int main() {
     cout << "Welcome to the ABCU Course Management System" << endl;
     cout << "===========================================" << endl;
@@ -93,10 +157,38 @@ int main() {
     string filename = getValidFilename();
 
     cout << "Ready to process file: " << filename << endl;
-    cout << "\nFile input successful! Press Enter to continue...";
-    cin.get(); // Wait for user to press Enter
 
-    cout << "Program will continue with file processing in next iteration." << endl;
+    // Transition to menu system
+    cout << "\nWelcome to the course planner." << endl;
+
+    bool running = true;
+
+    while (running) {
+        displayMenu();
+        string choice = getMenuChoice();
+
+        if (!isValidMenuChoice(choice)) {
+            cout << choice << " is not a valid option." << endl;
+            continue;
+        }
+
+        if (choice == "1") {
+            menuOption1(filename);
+        }
+        else if (choice == "2") {
+            menuOption2();
+        }
+        else if (choice == "3") {
+            menuOption3();
+        }
+        else if (choice == "9") {
+            cout << "Thank you for using the course planner!" << endl;
+            cout << "Press Enter to exit...";
+            cin.get(); // Wait for user to press Enter before exiting
+            running = false;
+        }
+    }
+    
 
     return 0;
 }
