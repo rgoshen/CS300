@@ -76,6 +76,68 @@ bool readFileLines(string filename, vector<string>& lines) {
 }
 
 /**
+ * Function: Parse Single Line
+ * Purpose: Splits a line by commas and cleans up tokens
+ * Input: line - raw line from file, tokens - reference to vector that will store parsed tokens
+ * Output: true if line was successfully parsed, false if malformed
+ */
+bool parseLine(string line, vector<string>& tokens) {
+    if (line.empty()) {
+        return false;
+    }
+
+    // Check if line is just whitespace
+    bool hasContent = false;
+    for (char c : line) {
+        if (c != ' ' && c != '\t' && c != '\r' && c != '\n') {
+            hasContent = true;
+            break;
+        }
+    }
+    if (!hasContent) {
+        return false;
+    }
+
+    // Split line by comma into tokens
+    tokens.clear();
+    string token = "";
+
+    for (char c : line) {
+        if (c == ',') {
+            tokens.push_back(token);
+            token = "";
+        }
+        else {
+            token += c;
+        }
+    }
+    // Add the last token
+    tokens.push_back(token);
+
+    // Clean up tokens: trim whitespace and remove empty tokens
+    for (int i = tokens.size() - 1; i >= 0; i--) {
+        // Trim leading and trailing whitespace
+        string& t = tokens[i];
+        size_t start = t.find_first_not_of(" \t\r\n");
+        size_t end = t.find_last_not_of(" \t\r\n");
+
+        if (start != string::npos && end != string::npos) {
+            t = t.substr(start, end - start + 1);
+        }
+        else {
+            t = "";
+        }
+
+        // Remove empty tokens
+        if (t.empty()) {
+            tokens.erase(tokens.begin() + i);
+        }
+    }
+
+    return tokens.size() > 0;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -199,15 +261,27 @@ void menuOption1(const string& filename) {
     if (readFileLines(filename, lines)) {
         cout << "File read successfully!" << endl;
         cout << "Number of lines read: " << lines.size() << endl;
+        cout << "\nParsing CSV data:" << endl;
+        cout << "=================" << endl;
 
-        // Debug: Show first few lines to verify content
-        cout << "Sample lines from file:" << endl;
-        for (int i = 0; i < min(3, (int)lines.size()); i++) {
-            cout << "  Line " << (i + 1) << ": " << lines[i] << endl;
+        // Test parsing each line
+        for (int i = 0; i < lines.size(); i++) {
+            cout << "\nLine " << (i + 1) << ": " << lines[i] << endl;
+
+            vector<string> tokens;
+            if (parseLine(lines[i], tokens)) {
+                cout << "  Parsed into " << tokens.size() << " tokens:" << endl;
+                for (int j = 0; j < tokens.size(); j++) {
+                    cout << "    Token " << j << ": '" << tokens[j] << "'" << endl;
+                }
+            }
+            else {
+                cout << "  ERROR: Failed to parse this line" << endl;
+            }
         }
 
-        // TODO: Parse lines and load into hash table
-        cout << "Data structure loaded with file: " << filename << endl;
+        // TODO: Validate file format and load into hash table
+        cout << "\nData structure loaded with file: " << filename << endl;
     }
     else {
         cout << "Failed to load courses from file. Please check the file format and try again." << endl;
