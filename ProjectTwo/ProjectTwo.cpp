@@ -163,6 +163,57 @@ bool validateLineFormat(vector<string> tokens, string originalLine) {
 }
 
 /**
+ * Function: Check if Course Exists
+ * Purpose: Searches for a course number in the file data
+ * Input: courseNumber - course to search for, allLines - all file lines
+ * Output: true if course exists, false otherwise
+ */
+bool courseExists(string courseNumber, vector<string> allLines) {
+    if (courseNumber.empty()) {
+        return false;
+    }
+
+    for (string line : allLines) {
+        vector<string> tokens;
+        if (parseLine(line, tokens) && tokens.size() >= 1) {
+            if (tokens[0] == courseNumber) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Function: Check All Prerequisites Exist
+ * Purpose: Validates that all prerequisites exist as courses in the file
+ * Input: allLines - all lines from the file
+ * Output: true if all prerequisites are valid, false otherwise
+ */
+bool validatePrerequisites(vector<string> allLines) {
+    for (string line : allLines) {
+        vector<string> tokens;
+        if (!parseLine(line, tokens)) {
+            continue; // Skip malformed lines
+        }
+
+        // Check prerequisites (tokens 2 and beyond)
+        if (tokens.size() > 2) { // has prerequisites
+            for (int i = 2; i < tokens.size(); i++) {
+                string prerequisite = tokens[i];
+                if (!prerequisite.empty() && !courseExists(prerequisite, allLines)) {
+                    cout << "Error: Prerequisite '" << prerequisite << "' in course '" << tokens[0] << "' does not exist as a course" << endl;
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -320,12 +371,31 @@ void menuOption1(const string& filename) {
         cout << "\n==================================" << endl;
         if (allLinesValid) {
             cout << "SUCCESS: All lines passed format validation!" << endl;
+
+            // Test prerequisite validation
+            cout << "\nTesting prerequisite validation:" << endl;
+            cout << "================================" << endl;
+            if (validatePrerequisites(lines)) {
+                cout << "SUCCESS: All prerequisites are valid!" << endl;
+            }
+            else {
+                cout << "ERROR: Some prerequisites are invalid" << endl;
+                allLinesValid = false;
+            }
         }
         else {
             cout << "ERROR: Some lines failed validation" << endl;
         }
 
-        // TODO: Validate prerequisites and load into hash table
+        cout << "\n==================================" << endl;
+        if (allLinesValid) {
+            cout << "SUCCESS: File passed all validation checks!" << endl;
+        }
+        else {
+            cout << "ERROR: File has validation issues" << endl;
+        }
+
+        // TODO: Create course objects and load into hash table
         cout << "\nData structure loaded with file: " << filename << endl;
     }
     else {
