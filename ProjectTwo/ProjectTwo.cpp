@@ -453,6 +453,93 @@ vector<Course> collectAllCourses(const HashTable& table) {
 }
 
 /**
+ * Merges two sorted subarrays into one sorted array
+ * @param courses Vector containing the subarrays
+ * @param left Start of first subarray
+ * @param middle End of first subarray (start of second is middle+1)
+ * @param right End of second subarray
+ */
+void merge(vector<Course>& courses, int left, int middle, int right) {
+    // Create temporary arrays for the two subarrays
+    vector<Course> leftArray;
+    vector<Course> rightArray;
+
+    // Copy data to temporary arrays
+    for (int i = left; i <= middle; i++) {
+        leftArray.push_back(courses[i]);
+    }
+
+    for (int j = middle + 1; j <= right; j++) {
+        rightArray.push_back(courses[j]);
+    }
+
+    // Merge the temporary arrays back into courses[left..right]
+    int i = 0;    // Initial index of first subarray
+    int j = 0;    // Initial index of second subarray
+    int k = left; // Initial index of merged subarray
+
+    while (i < leftArray.size() && j < rightArray.size()) {
+        // Compare course numbers for alphabetical ordering
+        if (leftArray[i].courseNumber <= rightArray[j].courseNumber) {
+            courses[k] = leftArray[i];
+            i++;
+        }
+        else {
+            courses[k] = rightArray[j];
+            j++;
+        }
+        k++;
+    }
+
+    // Copy remaining elements of leftArray, if any
+    while (i < leftArray.size()) {
+        courses[k] = leftArray[i];
+        i++;
+        k++;
+    }
+
+    // Copy remaining elements of rightArray, if any
+    while (j < rightArray.size()) {
+        courses[k] = rightArray[j];
+        j++;
+        k++;
+    }
+}
+
+/**
+ * Recursive merge sort implementation
+ * Divides the array into halves and recursively sorts each half
+ * @param courses Vector to sort
+ * @param left Starting index of the subarray
+ * @param right Ending index of the subarray
+ */
+void mergeSort(vector<Course>& courses, int left, int right) {
+    if (left < right) {
+        int middle = left + (right - left) / 2; // Avoid potential overflow
+
+        // Recursively sort first and second halves
+        mergeSort(courses, left, middle);
+        mergeSort(courses, middle + 1, right);
+
+        // Merge the sorted halves
+        merge(courses, left, middle, right);
+    }
+}
+
+/**
+ * Sorts a vector of courses alphanumerically by course number
+ * Uses merge sort algorithm for O(n log n) performance
+ * @param courses Vector of Course objects to sort (modified in place)
+ */
+void sortCoursesAlphanumerically(vector<Course>& courses) {
+    if (courses.size() <= 1) {
+        return; // Already sorted or empty
+    }
+
+    mergeSort(courses, 0, courses.size() - 1);
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
