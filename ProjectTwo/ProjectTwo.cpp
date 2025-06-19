@@ -19,8 +19,8 @@ struct Course {
  * Hash table node structure for chaining collision resolution
  */
 struct HashNode {
-    Course course;             // Course object containing course data
-    HashNode* next;            // Pointer to next node in chain (for collisions)
+    Course course;                 // Course object containing course data
+    HashNode* next = nullptr;      // Pointer to next node in chain (for collisions)
 };
 
 /**
@@ -163,29 +163,6 @@ bool validateLineFormat(vector<string> tokens, string originalLine) {
 }
 
 /**
- * Function: Check if Course Exists
- * Purpose: Searches for a course number in the file data
- * Input: courseNumber - course to search for, allLines - all file lines
- * Output: true if course exists, false otherwise
- */
-bool courseExists(string courseNumber, vector<string> allLines) {
-    if (courseNumber.empty()) {
-        return false;
-    }
-
-    for (string line : allLines) {
-        vector<string> tokens;
-        if (parseLine(line, tokens) && tokens.size() >= 1) {
-            if (tokens[0] == courseNumber) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-/**
  * Function: Check All Prerequisites Exist
  * Purpose: Validates that all prerequisites exist as courses in the file
  * Input: allLines - all lines from the file
@@ -211,6 +188,29 @@ bool validatePrerequisites(vector<string> allLines) {
     }
 
     return true;
+}
+
+/**
+ * Function: Check if Course Exists
+ * Purpose: Searches for a course number in the file data
+ * Input: courseNumber - course to search for, allLines - all file lines
+ * Output: true if course exists, false otherwise
+ */
+bool courseExists(string courseNumber, vector<string> allLines) {
+    if (courseNumber.empty()) {
+        return false;
+    }
+
+    for (string line : allLines) {
+        vector<string> tokens;
+        if (parseLine(line, tokens) && tokens.size() >= 1) {
+            if (tokens[0] == courseNumber) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -331,6 +331,49 @@ double getLoadFactor(HashTable table) {
 }
 
 /**
+ * Function: Resize Hash Table
+ * Purpose: Doubles table capacity and rehashes all existing courses
+ * Input: table - reference to hash table to resize
+ * Output: Updates table with new capacity and redistributed courses
+ */
+void resizeHashTable(HashTable& table) {
+    // Store old buckets for rehashing
+    vector<HashNode*> oldBuckets = table.buckets;
+    int oldCapacity = table.capacity;
+
+    // Double the capacity
+    table.capacity = table.capacity * 2;
+    table.size = 0; // Will be recounted during rehashing
+
+    // Create new empty bucket array
+    table.buckets.clear();
+    table.buckets.resize(table.capacity);
+    for (int i = 0; i < table.capacity; i++) {
+        table.buckets[i] = nullptr;
+    }
+
+    // Rehash all existing courses into new table
+    for (int i = 0; i < oldCapacity; i++) {
+        HashNode* current = oldBuckets[i];
+        while (current != nullptr) {
+            HashNode* next = current->next; // Save next before reinsertion
+
+            // Calculate new hash index for the resized table
+            int newIndex = hashFunction(current->course.courseNumber, table.capacity);
+
+            // Insert directly into new table (no resize check needed)
+            current->next = table.buckets[newIndex];
+            table.buckets[newIndex] = current;
+            table.size++;
+
+            current = next;
+        }
+    }
+
+    cout << "Hash table resized from " << oldCapacity << " to " << table.capacity << " buckets" << endl;
+}
+
+/**
  * Function: Check and Resize if Needed
  * Purpose: Monitors load factor and triggers resize when necessary
  * Input: table - reference to hash table to check
@@ -338,8 +381,7 @@ double getLoadFactor(HashTable table) {
  */
 void checkAndResize(HashTable& table) {
     if (getLoadFactor(table) > table.maxLoadFactor) {
-        cout << "Load factor exceeded " << table.maxLoadFactor << ", resizing hash table..." << endl;
-        // TODO: Implement resizeHashTable() function
+		resizeHashTable(table);
     }
 }
 
@@ -365,7 +407,6 @@ void insertCourseIntoTable(HashTable& table, Course course) {
     if (table.buckets[index] == nullptr) {
         // No collision - first course in this bucket
         table.buckets[index] = newNode;
-        cout << "Inserted " << course.courseNumber << " at bucket " << index << " (no collision)" << endl;
     }
     else {
         // Collision detected - check for duplicate course numbers first
@@ -375,7 +416,6 @@ void insertCourseIntoTable(HashTable& table, Course course) {
                 // Update existing course instead of creating duplicate
                 current->course = course;
                 delete newNode; // Clean up unused node
-                cout << "Updated existing course " << course.courseNumber << " at bucket " << index << endl;
                 return;
             }
             current = current->next;
@@ -384,7 +424,6 @@ void insertCourseIntoTable(HashTable& table, Course course) {
         // No duplicate found - add to front of chain
         newNode->next = table.buckets[index];
         table.buckets[index] = newNode;
-        cout << "Inserted " << course.courseNumber << " at bucket " << index << " (collision - chained)" << endl;
     }
 
     table.size = table.size + 1;
@@ -505,7 +544,7 @@ string getMenuChoice() {
  * Input: table - reference to hash table to populate
  * Output: Hash table is populated with validated course data
  */
-void menuOption1(const string& filename) {
+void menuOption1(const string& filename, HashTable& table) {
     cout << "Loading data structure..." << endl;
 
     vector<string> lines;
@@ -521,43 +560,21 @@ void menuOption1(const string& filename) {
         return;
     }
 
-    cout << "File validation successful!" << endl;
-    cout << "Number of valid courses: " << lines.size() << endl;
-
-    // Step 3: Create course objects
-    vector<Course> courses;
-    for (int i = 0; i < lines.size(); i++) {
+    // Step 3: Create course objects and insert into hash table
+    for (string line : lines) {
         Course newCourse;
-        if (createCourseObject(lines[i], newCourse)) {
-            courses.push_back(newCourse);
+        if (createCourseObject(line, newCourse)) {
+            insertCourseIntoTable(table, newCourse);
         }
         else {
-            cout << "Warning: Failed to create course object from line " << (i + 1) << endl;
+            cout << "Warning: Skipping invalid line during course creation" << endl;
         }
     }
 
-    // Step 4: Initialize hash table and insert courses
-    cout << "\nInitializing hash table and inserting courses:" << endl;
-    cout << "==============================================" << endl;
-
-    HashTable courseTable = initializeHashTable(16);
-    cout << "Hash table created with capacity: " << courseTable.capacity << endl;
-
-    // Insert each course and show the process
-    for (int i = 0; i < courses.size(); i++) {
-        cout << "\nInserting course " << (i + 1) << " of " << courses.size() << ":" << endl;
-        insertCourseIntoTable(courseTable, courses[i]);
-        cout << "Current size: " << courseTable.size << ", Load factor: " << getLoadFactor(courseTable) << endl;
-    }
-
-    // Final hash table statistics
-    cout << "\nFinal hash table state:" << endl;
-    cout << "======================" << endl;
-    cout << "Total courses inserted: " << courseTable.size << endl;
-    cout << "Table capacity: " << courseTable.capacity << endl;
-    cout << "Final load factor: " << getLoadFactor(courseTable) << endl;
-
-    cout << "\nData structure loaded with file: " << filename << endl;
+    cout << "Courses loaded successfully into hash table!" << endl;
+    cout << "Number of courses loaded: " << table.size << endl;
+    cout << "Hash table capacity: " << table.capacity << endl;
+    cout << "Current load factor: " << getLoadFactor(table) << endl;
 }
 
 /**
@@ -591,6 +608,10 @@ void menuOption3() {
 
 
 int main() {
+
+    // Near the top of main(), after getting the filename:
+    HashTable courseTable = initializeHashTable(16);
+
     cout << "Welcome to the ABCU Course Management System" << endl;
     cout << "===========================================" << endl;
 
@@ -613,7 +634,7 @@ int main() {
         }
 
         if (choice == "1") {
-            menuOption1(filename);
+            menuOption1(filename, courseTable);
         }
         else if (choice == "2") {
             menuOption2();
