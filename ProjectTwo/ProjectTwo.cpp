@@ -331,6 +331,66 @@ double getLoadFactor(HashTable table) {
 }
 
 /**
+ * Function: Check and Resize if Needed
+ * Purpose: Monitors load factor and triggers resize when necessary
+ * Input: table - reference to hash table to check
+ * Output: Resizes table if load factor > 0.7
+ */
+void checkAndResize(HashTable& table) {
+    if (getLoadFactor(table) > table.maxLoadFactor) {
+        cout << "Load factor exceeded " << table.maxLoadFactor << ", resizing hash table..." << endl;
+        // TODO: Implement resizeHashTable() function
+    }
+}
+
+/**
+ * Function: Insert Course into Hash Table
+ * Purpose: Adds a course to the hash table using chaining for collision resolution
+ * Input: table - reference to hash table, course - Course object to insert
+ * Output: Updates table with new course, handles collisions via chaining
+ */
+void insertCourseIntoTable(HashTable& table, Course course) {
+    // Check if resize needed before insertion
+    checkAndResize(table);
+
+    // Calculate hash index for course
+    int index = hashFunction(course.courseNumber, table.capacity);
+
+    // Create new node for the course
+    HashNode* newNode = new HashNode();
+    newNode->course = course;
+    newNode->next = nullptr;
+
+    // Handle collision using chaining
+    if (table.buckets[index] == nullptr) {
+        // No collision - first course in this bucket
+        table.buckets[index] = newNode;
+        cout << "Inserted " << course.courseNumber << " at bucket " << index << " (no collision)" << endl;
+    }
+    else {
+        // Collision detected - check for duplicate course numbers first
+        HashNode* current = table.buckets[index];
+        while (current != nullptr) {
+            if (current->course.courseNumber == course.courseNumber) {
+                // Update existing course instead of creating duplicate
+                current->course = course;
+                delete newNode; // Clean up unused node
+                cout << "Updated existing course " << course.courseNumber << " at bucket " << index << endl;
+                return;
+            }
+            current = current->next;
+        }
+
+        // No duplicate found - add to front of chain
+        newNode->next = table.buckets[index];
+        table.buckets[index] = newNode;
+        cout << "Inserted " << course.courseNumber << " at bucket " << index << " (collision - chained)" << endl;
+    }
+
+    table.size = table.size + 1;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -464,54 +524,40 @@ void menuOption1(const string& filename) {
     cout << "File validation successful!" << endl;
     cout << "Number of valid courses: " << lines.size() << endl;
 
-    // Step 3: Test creating course objects
+    // Step 3: Create course objects
     vector<Course> courses;
-    cout << "\nCreating course objects:" << endl;
-    cout << "========================" << endl;
-
     for (int i = 0; i < lines.size(); i++) {
         Course newCourse;
         if (createCourseObject(lines[i], newCourse)) {
             courses.push_back(newCourse);
-            cout << "Course " << (i + 1) << ": " << newCourse.courseNumber << " - " << newCourse.name << endl;
-            if (newCourse.prerequisites.size() > 0) {
-                cout << "  Prerequisites: ";
-                for (int j = 0; j < newCourse.prerequisites.size(); j++) {
-                    cout << newCourse.prerequisites[j];
-                    if (j < newCourse.prerequisites.size() - 1) cout << ", ";
-                }
-                cout << endl;
-            }
-            else {
-                cout << "  No prerequisites" << endl;
-            }
         }
         else {
             cout << "Warning: Failed to create course object from line " << (i + 1) << endl;
         }
     }
 
-    // Step 4: Test hash table initialization
-    cout << "\nTesting hash table:" << endl;
-    cout << "==================" << endl;
+    // Step 4: Initialize hash table and insert courses
+    cout << "\nInitializing hash table and inserting courses:" << endl;
+    cout << "==============================================" << endl;
 
     HashTable courseTable = initializeHashTable(16);
-    cout << "Hash table created successfully!" << endl;
-    cout << "Initial capacity: " << courseTable.capacity << endl;
-    cout << "Initial size: " << courseTable.size << endl;
-    cout << "Max load factor: " << courseTable.maxLoadFactor << endl;
-    cout << "Initial load factor: " << getLoadFactor(courseTable) << endl;
+    cout << "Hash table created with capacity: " << courseTable.capacity << endl;
 
-    // Test hash function with some course numbers
-    cout << "\nTesting hash function:" << endl;
-    cout << "=====================" << endl;
-    for (int i = 0; i < min(5, (int)courses.size()); i++) {
-        string courseNum = courses[i].courseNumber;
-        int hashIndex = hashFunction(courseNum, courseTable.capacity);
-        cout << "Course " << courseNum << " hashes to bucket " << hashIndex << endl;
+    // Insert each course and show the process
+    for (int i = 0; i < courses.size(); i++) {
+        cout << "\nInserting course " << (i + 1) << " of " << courses.size() << ":" << endl;
+        insertCourseIntoTable(courseTable, courses[i]);
+        cout << "Current size: " << courseTable.size << ", Load factor: " << getLoadFactor(courseTable) << endl;
     }
 
-    cout << "Data structure loaded with file: " << filename << endl;
+    // Final hash table statistics
+    cout << "\nFinal hash table state:" << endl;
+    cout << "======================" << endl;
+    cout << "Total courses inserted: " << courseTable.size << endl;
+    cout << "Table capacity: " << courseTable.capacity << endl;
+    cout << "Final load factor: " << getLoadFactor(courseTable) << endl;
+
+    cout << "\nData structure loaded with file: " << filename << endl;
 }
 
 /**
