@@ -568,13 +568,76 @@ void printAllCoursesSorted(const HashTable& table) {
     sortCoursesAlphanumerically(allCourses);
 
     // Display the sorted course list
-    cout << "Here is a sample schedule:" << endl;
+    cout << "Here is a sample schedule:\n" << endl;
 
     for (const Course& course : allCourses) {
         printCourseInfo(course);
     }
 
     cout << endl; // Add blank line for separation before menu redisplays
+}
+
+/**
+ * Function: Search Course in Hash Table
+ * Purpose: Efficiently finds a course using hash table lookup
+ * Input: table - hash table to search, courseNumber - course to find,
+ *        foundCourse - reference to Course object to populate if found
+ * Output: true if course found, false otherwise
+ * Complexity: Average O(1), worst case O(n) if many collisions
+ */
+bool searchCourse(const HashTable& table, const string& courseNumber, Course& foundCourse) {
+    if (courseNumber.empty()) {
+        return false;
+    }
+
+    // Calculate hash index
+    int index = hashFunction(courseNumber, table.capacity);
+
+    // Search through chain at this index
+    HashNode* current = table.buckets[index];
+
+    while (current != nullptr) {
+        if (current->course.courseNumber == courseNumber) {
+            foundCourse = current->course;
+            return true;
+        }
+        current = current->next;
+    }
+
+    return false; // Course not found
+}
+
+/**
+ * Function: Print Prerequisites
+ * Purpose: Displays all prerequisites for a course using hash table lookups
+ * Input: course - Course object whose prerequisites to display,
+ *        table - hash table for prerequisite lookups
+ * Output: Prints prerequisite course information or "No prerequisites required"
+ */
+void printPrerequisites(const Course& course, const HashTable& table) {
+    if (course.prerequisites.size() == 0) {
+        cout << "No prerequisites required" << endl;
+        return;
+    }
+
+    cout << "Prerequisites: ";
+
+    for (size_t i = 0; i < course.prerequisites.size(); i++) {
+        Course prereqCourse;
+        if (searchCourse(table, course.prerequisites[i], prereqCourse)) {
+            cout << prereqCourse.courseNumber << ", " << prereqCourse.name;
+        }
+        else {
+            cout << "Warning: Prerequisite " << course.prerequisites[i] << " not found";
+        }
+
+        // Add comma separator between prerequisites (except for last one)
+        if (i < course.prerequisites.size() - 1) {
+            cout << "; ";
+        }
+    }
+
+    cout << endl;
 }
 
 /**
@@ -737,15 +800,43 @@ void menuOption2(const HashTable& table) {
 }
 
 /**
- * Handles menu option 3 - Print Course
+ * Function: Menu Option 3 - Print Course
+ * Purpose: Searches for and displays specific course information with prerequisites
+ * Input: table - hash table containing courses
+ * Output: Displays course information and prerequisites, or error message
  */
-void menuOption3() {
+void menuOption3(const HashTable& table) {
+    if (table.size == 0) {
+        cout << "No courses loaded. Please load data first using option 1." << endl;
+        return;
+    }
+
     string courseNumber;
     cout << "What course do you want to know about? ";
     getline(cin, courseNumber);
 
-    cout << "CSCI400, Large Software Development" << endl;
-    cout << "Prerequisites: CSCI301, CSCI350" << endl;
+    if (courseNumber.empty()) {
+        cout << "Error: Course number cannot be empty" << endl;
+        return;
+    }
+
+    // Convert to uppercase for case-insensitive search
+    for (char& c : courseNumber) {
+        c = toupper(c);
+    }
+
+    Course foundCourse;
+    if (searchCourse(table, courseNumber, foundCourse)) {
+        cout << endl << "Course Information:" << endl;
+        cout << "===================" << endl;
+        printCourseInfo(foundCourse);
+        cout << endl;
+        printPrerequisites(foundCourse, table);
+    }
+    else {
+        cout << "Course '" << courseNumber << "' not found." << endl;
+        cout << "Please check the course number and try again." << endl;
+    }
 }
 
 
@@ -784,10 +875,10 @@ int main() {
             menuOption2(courseTable);
         }
         else if (choice == "3") {
-            menuOption3();
+            menuOption3(courseTable);
         }
         else if (choice == "9") {
-            cout << "Thank you for using the course planner!" << endl;
+            cout << "Thank you for using the course planner!\n" << endl;
             cout << "Press Enter to exit...";
             cin.get(); // Wait for user to press Enter before exiting
             running = false;
