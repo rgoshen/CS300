@@ -550,6 +550,34 @@ void printCourseInfo(const Course& course) {
 }
 
 /**
+ * Function: Print All Courses Sorted
+ * Purpose: Displays all courses from hash table in alphanumeric order
+ * Input: table - hash table containing courses
+ * Output: Displays all courses sorted by course number
+ */
+void printAllCoursesSorted(const HashTable& table) {
+    if (table.size == 0) {
+        cout << "No courses loaded. Please load data first using option 1." << endl;
+        return;
+    }
+
+    // Collect all courses from hash table
+    vector<Course> allCourses = collectAllCourses(table);
+
+    // Sort the courses alphanumerically
+    sortCoursesAlphanumerically(allCourses);
+
+    // Display the sorted course list
+    cout << "Here is a sample schedule:" << endl;
+
+    for (const Course& course : allCourses) {
+        printCourseInfo(course);
+    }
+
+    cout << endl; // Add blank line for separation before menu redisplays
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -705,24 +733,7 @@ void menuOption1(const string& filename, HashTable& table) {
  * Output: All courses displayed in alphanumeric order by course number
  */
 void menuOption2(const HashTable& table) {
-    // Check if any courses are loaded
-    if (table.size == 0) {
-        cout << "No courses loaded. Please load data first using option 1." << endl;
-        return;
-    }
-
-    // Collect all courses from hash table
-    vector<Course> allCourses = collectAllCourses(table);
-
-    // Sort the courses alphanumerically
-    sortCoursesAlphanumerically(allCourses);
-
-    // Display the sorted course list
-    cout << "Here is a sample schedule:\n" << endl;
-
-    for (const Course& course : allCourses) {
-        printCourseInfo(course);
-    }
+    printAllCoursesSorted(table);
 }
 
 /**
