@@ -664,6 +664,34 @@ void printPrerequisites(const Course& course, const HashTable& table) {
 }
 
 /**
+ * Function: Clean Up Hash Table
+ * Purpose: Deallocates all memory used by hash table
+ * Input: table - reference to hash table to clean up
+ * Output: Frees all nodes and resets table to empty state
+ */
+void cleanupHashTable(HashTable& table) {
+    // Traverse all buckets in the hash table
+    for (int i = 0; i < table.capacity; i++) {
+        HashNode* current = table.buckets[i];
+
+        // Delete all nodes in the collision chain at this bucket
+        while (current != nullptr) {
+            HashNode* next = current->next;
+            delete current;
+            current = next;
+        }
+
+        // Set bucket pointer to null
+        table.buckets[i] = nullptr;
+    }
+
+    // Reset table properties
+    table.size = 0;
+
+    cout << "Hash table memory cleaned up successfully" << endl;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -901,7 +929,9 @@ int main() {
             menuOption3(courseTable);
         }
         else if (choice == "9") {
-            cout << "Thank you for using the course planner!\n" << endl;
+            cout << "\nCleaning up memory..." << endl;
+            cleanupHashTable(courseTable);
+            cout << "\nThank you for using the course planner!\n" << endl;
             cout << "Press Enter to exit...";
             cin.get(); // Wait for user to press Enter before exiting
             running = false;
