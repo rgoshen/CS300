@@ -213,8 +213,6 @@ bool validatePrerequisites(vector<string> allLines) {
     return true;
 }
 
-
-
 /**
  * Function: Validate Entire File
  * Purpose: Orchestrates all file validation steps
@@ -273,6 +271,63 @@ bool createCourseObject(string line, Course& course) {
     }
 
     return true;
+}
+
+/**
+ * Function: Initialize Hash Table
+ * Purpose: Creates and initializes a new hash table with specified capacity
+ * Input: initialCapacity - starting number of buckets
+ * Output: Initialized HashTable structure
+ */
+HashTable initializeHashTable(int initialCapacity = 16) {
+    HashTable table;
+    table.capacity = initialCapacity;
+    table.size = 0;
+    table.maxLoadFactor = 0.7;
+
+    // Initialize all buckets to null
+    table.buckets.resize(initialCapacity);
+    for (int i = 0; i < initialCapacity; i++) {
+        table.buckets[i] = nullptr;
+    }
+
+    return table;
+}
+
+/**
+ * Function: Hash Function
+ * Purpose: Converts course number string to hash index using polynomial rolling hash
+ * Input: courseNumber - string to hash, capacity - table size for modulo
+ * Output: Hash index (0 to capacity-1)
+ */
+int hashFunction(string courseNumber, int capacity) {
+    if (courseNumber.empty()) {
+        return 0;
+    }
+
+    int hash = 0;
+    int prime = 31; // Common prime for polynomial hash
+
+    for (int i = 0; i < courseNumber.length(); i++) {
+        char c = courseNumber[i];
+        hash = hash * prime + (int)c;
+    }
+
+    // Ensure positive result and fit within table capacity
+    return abs(hash) % capacity;
+}
+
+/**
+ * Function: Calculate Load Factor
+ * Purpose: Determines current load factor for resize decisions
+ * Input: table - hash table to analyze
+ * Output: Current load factor (size/capacity ratio)
+ */
+double getLoadFactor(HashTable table) {
+    if (table.capacity == 0) {
+        return 0.0;
+    }
+    return (double)table.size / (double)table.capacity;
 }
 
 /**
@@ -410,12 +465,14 @@ void menuOption1(const string& filename) {
     cout << "Number of valid courses: " << lines.size() << endl;
 
     // Step 3: Test creating course objects
+    vector<Course> courses;
     cout << "\nCreating course objects:" << endl;
     cout << "========================" << endl;
 
     for (int i = 0; i < lines.size(); i++) {
         Course newCourse;
         if (createCourseObject(lines[i], newCourse)) {
+            courses.push_back(newCourse);
             cout << "Course " << (i + 1) << ": " << newCourse.courseNumber << " - " << newCourse.name << endl;
             if (newCourse.prerequisites.size() > 0) {
                 cout << "  Prerequisites: ";
@@ -432,6 +489,26 @@ void menuOption1(const string& filename) {
         else {
             cout << "Warning: Failed to create course object from line " << (i + 1) << endl;
         }
+    }
+
+    // Step 4: Test hash table initialization
+    cout << "\nTesting hash table:" << endl;
+    cout << "==================" << endl;
+
+    HashTable courseTable = initializeHashTable(16);
+    cout << "Hash table created successfully!" << endl;
+    cout << "Initial capacity: " << courseTable.capacity << endl;
+    cout << "Initial size: " << courseTable.size << endl;
+    cout << "Max load factor: " << courseTable.maxLoadFactor << endl;
+    cout << "Initial load factor: " << getLoadFactor(courseTable) << endl;
+
+    // Test hash function with some course numbers
+    cout << "\nTesting hash function:" << endl;
+    cout << "=====================" << endl;
+    for (int i = 0; i < min(5, (int)courses.size()); i++) {
+        string courseNum = courses[i].courseNumber;
+        int hashIndex = hashFunction(courseNum, courseTable.capacity);
+        cout << "Course " << courseNum << " hashes to bucket " << hashIndex << endl;
     }
 
     cout << "Data structure loaded with file: " << filename << endl;
