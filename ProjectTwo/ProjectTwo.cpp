@@ -163,6 +163,29 @@ bool validateLineFormat(vector<string> tokens, string originalLine) {
 }
 
 /**
+ * Function: Check if Course Exists
+ * Purpose: Searches for a course number in the file data
+ * Input: courseNumber - course to search for, allLines - all file lines
+ * Output: true if course exists, false otherwise
+ */
+bool courseExists(string courseNumber, vector<string> allLines) {
+    if (courseNumber.empty()) {
+        return false;
+    }
+
+    for (string line : allLines) {
+        vector<string> tokens;
+        if (parseLine(line, tokens) && tokens.size() >= 1) {
+            if (tokens[0] == courseNumber) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
  * Function: Check All Prerequisites Exist
  * Purpose: Validates that all prerequisites exist as courses in the file
  * Input: allLines - all lines from the file
@@ -188,29 +211,6 @@ bool validatePrerequisites(vector<string> allLines) {
     }
 
     return true;
-}
-
-/**
- * Function: Check if Course Exists
- * Purpose: Searches for a course number in the file data
- * Input: courseNumber - course to search for, allLines - all file lines
- * Output: true if course exists, false otherwise
- */
-bool courseExists(string courseNumber, vector<string> allLines) {
-    if (courseNumber.empty()) {
-        return false;
-    }
-
-    for (string line : allLines) {
-        vector<string> tokens;
-        if (parseLine(line, tokens) && tokens.size() >= 1) {
-            if (tokens[0] == courseNumber) {
-                return true;
-            }
-        }
-    }
-
-    return false;
 }
 
 /**
