@@ -540,6 +540,16 @@ void sortCoursesAlphanumerically(vector<Course>& courses) {
 }
 
 /**
+ * Function: Print Single Course Info
+ * Purpose: Displays basic course information in required format
+ * Input: course - Course object to display
+ * Output: Prints "courseNumber, courseName" to console
+ */
+void printCourseInfo(const Course& course) {
+    cout << course.courseNumber << ", " << course.name << endl;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -711,7 +721,7 @@ void menuOption2(const HashTable& table) {
     cout << "Here is a sample schedule:\n" << endl;
 
     for (const Course& course : allCourses) {
-        cout << course.courseNumber << ", " << course.name << endl;
+        printCourseInfo(course);
     }
 }
 
