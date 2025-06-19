@@ -1,8 +1,433 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 
 using namespace std;
+
+/**
+ * Course Structure
+ * Contains course number, name, and list of prerequisites
+ */
+struct Course {
+    string courseNumber;          // Unique identifier (e.g., "CSCI100")
+    string name;                  // Full course name
+    vector<string> prerequisites; // List of prerequisite course numbers
+};
+
+/**
+ * Hash table node structure for chaining collision resolution
+ */
+struct HashNode {
+    Course course;                 // Course object containing course data
+    HashNode* next = nullptr;      // Pointer to next node in chain (for collisions)
+};
+
+/**
+ * Hash table structure with dynamic resizing capability
+ */
+struct HashTable {
+    vector<HashNode*> buckets; // Array of pointers to hash nodes
+    int size;                  // Current number of courses stored
+    int capacity;              // Current number of buckets
+    double maxLoadFactor;      // Maximum load factor before resize (0.7)
+};
+
+/**
+ * Function: Open and Read File
+ * Purpose: Opens a file and reads all valid lines into a vector
+ * Input: filename - path to the course data file, lines - reference to vector that will store file lines
+ * Output: true if file was successfully read, false otherwise
+ */
+bool readFileLines(string filename, vector<string>& lines) {
+    ifstream file(filename);
+
+    if (!file.is_open()) {
+        cout << "Error: Cannot open file '" << filename << "'" << endl;
+        return false;
+    }
+
+    string line;
+    while (getline(file, line)) {
+        // Check if line is not empty and not just whitespace
+        if (!line.empty()) {
+            // Simple whitespace check - if line has any non-space characters
+            bool hasContent = false;
+            for (char c : line) {
+                if (c != ' ' && c != '\t' && c != '\r' && c != '\n') {
+                    hasContent = true;
+                    break;
+                }
+            }
+            if (hasContent) {
+                lines.push_back(line);
+            }
+        }
+    }
+
+    file.close();
+
+    if (lines.size() == 0) {
+        cout << "Error: File is empty or contains no valid data" << endl;
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Function: Parse Single Line
+ * Purpose: Splits a line by commas and cleans up tokens
+ * Input: line - raw line from file, tokens - reference to vector that will store parsed tokens
+ * Output: true if line was successfully parsed, false if malformed
+ */
+bool parseLine(string line, vector<string>& tokens) {
+    if (line.empty()) {
+        return false;
+    }
+
+    // Check if line is just whitespace
+    bool hasContent = false;
+    for (char c : line) {
+        if (c != ' ' && c != '\t' && c != '\r' && c != '\n') {
+            hasContent = true;
+            break;
+        }
+    }
+    if (!hasContent) {
+        return false;
+    }
+
+    // Split line by comma into tokens
+    tokens.clear();
+    string token = "";
+
+    for (char c : line) {
+        if (c == ',') {
+            tokens.push_back(token);
+            token = "";
+        }
+        else {
+            token += c;
+        }
+    }
+    // Add the last token
+    tokens.push_back(token);
+
+    // Clean up tokens: trim whitespace and remove empty tokens
+    for (int i = tokens.size() - 1; i >= 0; i--) {
+        // Trim leading and trailing whitespace
+        string& t = tokens[i];
+        size_t start = t.find_first_not_of(" \t\r\n");
+        size_t end = t.find_last_not_of(" \t\r\n");
+
+        if (start != string::npos && end != string::npos) {
+            t = t.substr(start, end - start + 1);
+        }
+        else {
+            t = "";
+        }
+
+        // Remove empty tokens
+        if (t.empty()) {
+            tokens.erase(tokens.begin() + i);
+        }
+    }
+
+    return tokens.size() > 0;
+}
+
+/**
+ * Function: Validate Line Format
+ * Purpose: Ensures each line has minimum required fields
+ * Input: tokens - parsed line tokens, originalLine - for error reporting
+ * Output: true if line format is valid, false otherwise
+ */
+bool validateLineFormat(vector<string> tokens, string originalLine) {
+    if (tokens.size() < 2) {
+        cout << "Error: Line '" << originalLine << "' does not have minimum required parameters" << endl;
+        return false;
+    }
+
+    if (tokens[0].empty()) {
+        cout << "Error: Course number cannot be empty" << endl;
+        return false;
+    }
+
+    if (tokens[1].empty()) {
+        cout << "Error: Course name cannot be empty" << endl;
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Function: Check All Prerequisites Exist
+ * Purpose: Validates that all prerequisites exist as courses in the file
+ * Input: allLines - all lines from the file
+ * Output: true if all prerequisites are valid, false otherwise
+ */
+bool validatePrerequisites(vector<string> allLines) {
+    for (string line : allLines) {
+        vector<string> tokens;
+        if (!parseLine(line, tokens)) {
+            continue; // Skip malformed lines
+        }
+
+        // Check prerequisites (tokens 2 and beyond)
+        if (tokens.size() > 2) { // has prerequisites
+            for (int i = 2; i < tokens.size(); i++) {
+                string prerequisite = tokens[i];
+                if (!prerequisite.empty() && !courseExists(prerequisite, allLines)) {
+                    cout << "Error: Prerequisite '" << prerequisite << "' in course '" << tokens[0] << "' does not exist as a course" << endl;
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Function: Check if Course Exists
+ * Purpose: Searches for a course number in the file data
+ * Input: courseNumber - course to search for, allLines - all file lines
+ * Output: true if course exists, false otherwise
+ */
+bool courseExists(string courseNumber, vector<string> allLines) {
+    if (courseNumber.empty()) {
+        return false;
+    }
+
+    for (string line : allLines) {
+        vector<string> tokens;
+        if (parseLine(line, tokens) && tokens.size() >= 1) {
+            if (tokens[0] == courseNumber) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Function: Validate Entire File
+ * Purpose: Orchestrates all file validation steps
+ * Input: lines - all lines read from file
+ * Output: true if entire file is valid, false if any validation fails
+ */
+bool validateFile(vector<string> lines) {
+    if (lines.size() == 0) {
+        cout << "Error: No valid lines found in file" << endl;
+        return false;
+    }
+
+    // Step 1: Check that all lines can be parsed and have valid format
+    for (string line : lines) {
+        vector<string> tokens;
+        if (!parseLine(line, tokens)) {
+            cout << "Error: Unable to parse line '" << line << "'" << endl;
+            return false;
+        }
+
+        if (!validateLineFormat(tokens, line)) {
+            return false;
+        }
+    }
+
+    // Step 2: Check that all prerequisites exist as courses
+    if (!validatePrerequisites(lines)) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Function: Create Single Course Object
+ * Purpose: Creates a Course object from a validated line of data
+ * Input: line - validated line from file, course - reference to Course object to populate
+ * Output: true if course was created successfully, false otherwise
+ */
+bool createCourseObject(string line, Course& course) {
+    vector<string> tokens;
+    if (!parseLine(line, tokens) || tokens.size() < 2) {
+        return false; // Invalid line format
+    }
+
+    // Set required fields
+    course.courseNumber = tokens[0];
+    course.name = tokens[1];
+    course.prerequisites.clear();
+
+    // Add prerequisites (tokens 2 and beyond)
+    for (int i = 2; i < tokens.size(); i++) {
+        if (!tokens[i].empty()) {
+            course.prerequisites.push_back(tokens[i]);
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Function: Initialize Hash Table
+ * Purpose: Creates and initializes a new hash table with specified capacity
+ * Input: initialCapacity - starting number of buckets
+ * Output: Initialized HashTable structure
+ */
+HashTable initializeHashTable(int initialCapacity = 16) {
+    HashTable table;
+    table.capacity = initialCapacity;
+    table.size = 0;
+    table.maxLoadFactor = 0.7;
+
+    // Initialize all buckets to null
+    table.buckets.resize(initialCapacity);
+    for (int i = 0; i < initialCapacity; i++) {
+        table.buckets[i] = nullptr;
+    }
+
+    return table;
+}
+
+/**
+ * Function: Hash Function
+ * Purpose: Converts course number string to hash index using polynomial rolling hash
+ * Input: courseNumber - string to hash, capacity - table size for modulo
+ * Output: Hash index (0 to capacity-1)
+ */
+int hashFunction(string courseNumber, int capacity) {
+    if (courseNumber.empty()) {
+        return 0;
+    }
+
+    int hash = 0;
+    int prime = 31; // Common prime for polynomial hash
+
+    for (int i = 0; i < courseNumber.length(); i++) {
+        char c = courseNumber[i];
+        hash = hash * prime + (int)c;
+    }
+
+    // Ensure positive result and fit within table capacity
+    return abs(hash) % capacity;
+}
+
+/**
+ * Function: Calculate Load Factor
+ * Purpose: Determines current load factor for resize decisions
+ * Input: table - hash table to analyze
+ * Output: Current load factor (size/capacity ratio)
+ */
+double getLoadFactor(HashTable table) {
+    if (table.capacity == 0) {
+        return 0.0;
+    }
+    return (double)table.size / (double)table.capacity;
+}
+
+/**
+ * Function: Resize Hash Table
+ * Purpose: Doubles table capacity and rehashes all existing courses
+ * Input: table - reference to hash table to resize
+ * Output: Updates table with new capacity and redistributed courses
+ */
+void resizeHashTable(HashTable& table) {
+    // Store old buckets for rehashing
+    vector<HashNode*> oldBuckets = table.buckets;
+    int oldCapacity = table.capacity;
+
+    // Double the capacity
+    table.capacity = table.capacity * 2;
+    table.size = 0; // Will be recounted during rehashing
+
+    // Create new empty bucket array
+    table.buckets.clear();
+    table.buckets.resize(table.capacity);
+    for (int i = 0; i < table.capacity; i++) {
+        table.buckets[i] = nullptr;
+    }
+
+    // Rehash all existing courses into new table
+    for (int i = 0; i < oldCapacity; i++) {
+        HashNode* current = oldBuckets[i];
+        while (current != nullptr) {
+            HashNode* next = current->next; // Save next before reinsertion
+
+            // Calculate new hash index for the resized table
+            int newIndex = hashFunction(current->course.courseNumber, table.capacity);
+
+            // Insert directly into new table (no resize check needed)
+            current->next = table.buckets[newIndex];
+            table.buckets[newIndex] = current;
+            table.size++;
+
+            current = next;
+        }
+    }
+
+    cout << "Hash table resized from " << oldCapacity << " to " << table.capacity << " buckets" << endl;
+}
+
+/**
+ * Function: Check and Resize if Needed
+ * Purpose: Monitors load factor and triggers resize when necessary
+ * Input: table - reference to hash table to check
+ * Output: Resizes table if load factor > 0.7
+ */
+void checkAndResize(HashTable& table) {
+    if (getLoadFactor(table) > table.maxLoadFactor) {
+		resizeHashTable(table);
+    }
+}
+
+/**
+ * Function: Insert Course into Hash Table
+ * Purpose: Adds a course to the hash table using chaining for collision resolution
+ * Input: table - reference to hash table, course - Course object to insert
+ * Output: Updates table with new course, handles collisions via chaining
+ */
+void insertCourseIntoTable(HashTable& table, Course course) {
+    // Check if resize needed before insertion
+    checkAndResize(table);
+
+    // Calculate hash index for course
+    int index = hashFunction(course.courseNumber, table.capacity);
+
+    // Create new node for the course
+    HashNode* newNode = new HashNode();
+    newNode->course = course;
+    newNode->next = nullptr;
+
+    // Handle collision using chaining
+    if (table.buckets[index] == nullptr) {
+        // No collision - first course in this bucket
+        table.buckets[index] = newNode;
+    }
+    else {
+        // Collision detected - check for duplicate course numbers first
+        HashNode* current = table.buckets[index];
+        while (current != nullptr) {
+            if (current->course.courseNumber == course.courseNumber) {
+                // Update existing course instead of creating duplicate
+                current->course = course;
+                delete newNode; // Clean up unused node
+                return;
+            }
+            current = current->next;
+        }
+
+        // No duplicate found - add to front of chain
+        newNode->next = table.buckets[index];
+        table.buckets[index] = newNode;
+    }
+
+    table.size = table.size + 1;
+}
 
 /**
  * Trims leading/trailing whitespace and quotes from filename
@@ -114,11 +539,42 @@ string getMenuChoice() {
 }
 
 /**
- * Handles menu option 1 - Load Data Structure
+ * Function: Menu Option 1 - Load Data Structure
+ * Purpose: Handles loading course data into hash table with comprehensive error handling
+ * Input: table - reference to hash table to populate
+ * Output: Hash table is populated with validated course data
  */
-void menuOption1(const string& filename) {
+void menuOption1(const string& filename, HashTable& table) {
     cout << "Loading data structure..." << endl;
-    cout << "Data structure loaded with file: " << filename << endl;
+
+    vector<string> lines;
+
+    // Step 1: Read file contents
+    if (!readFileLines(filename, lines)) {
+        return;
+    }
+
+    // Step 2: Validate file format and prerequisites
+    if (!validateFile(lines)) {
+        cout << "Failed to load courses from file. Please check the file format and try again." << endl;
+        return;
+    }
+
+    // Step 3: Create course objects and insert into hash table
+    for (string line : lines) {
+        Course newCourse;
+        if (createCourseObject(line, newCourse)) {
+            insertCourseIntoTable(table, newCourse);
+        }
+        else {
+            cout << "Warning: Skipping invalid line during course creation" << endl;
+        }
+    }
+
+    cout << "Courses loaded successfully into hash table!" << endl;
+    cout << "Number of courses loaded: " << table.size << endl;
+    cout << "Hash table capacity: " << table.capacity << endl;
+    cout << "Current load factor: " << getLoadFactor(table) << endl;
 }
 
 /**
@@ -150,7 +606,12 @@ void menuOption3() {
 
 
 
+
 int main() {
+
+    // Near the top of main(), after getting the filename:
+    HashTable courseTable = initializeHashTable(16);
+
     cout << "Welcome to the ABCU Course Management System" << endl;
     cout << "===========================================" << endl;
 
@@ -173,7 +634,7 @@ int main() {
         }
 
         if (choice == "1") {
-            menuOption1(filename);
+            menuOption1(filename, courseTable);
         }
         else if (choice == "2") {
             menuOption2();
