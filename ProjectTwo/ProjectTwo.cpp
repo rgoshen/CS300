@@ -689,17 +689,27 @@ void menuOption1(const string& filename, HashTable& table) {
 
 /**
  * Handles menu option 2 - Print Course List
+ * Displays all courses in alphanumeric order
  */
-void menuOption2() {
+void menuOption2(const HashTable& table) {
+    // Check if any courses are loaded
+    if (table.size == 0) {
+        cout << "No courses loaded. Please load data first using option 1." << endl;
+        return;
+    }
+
+    // Collect all courses from hash table
+    vector<Course> allCourses = collectAllCourses(table);
+
+    // Sort the courses alphanumerically
+    sortCoursesAlphanumerically(allCourses);
+
+    // Display the sorted course list
     cout << "Here is a sample schedule:" << endl;
-    cout << "CSCI100, Introduction to Computer Science" << endl;
-    cout << "CSCI101, Introduction to Programming in C++" << endl;
-    cout << "CSCI200, Data Structures" << endl;
-    cout << "CSCI301, Advanced Programming in C++" << endl;
-    cout << "CSCI300, Introduction to Algorithms" << endl;
-    cout << "CSCI350, Operating Systems" << endl;
-    cout << "CSCI400, Large Software Development" << endl;
-    cout << "MATH201, Discrete Mathematics" << endl;
+
+    for (const Course& course : allCourses) {
+        cout << course.courseNumber << ", " << course.name << endl;
+    }
 }
 
 /**
@@ -747,7 +757,7 @@ int main() {
             menuOption1(filename, courseTable);
         }
         else if (choice == "2") {
-            menuOption2();
+            menuOption2(courseTable);
         }
         else if (choice == "3") {
             menuOption3();
