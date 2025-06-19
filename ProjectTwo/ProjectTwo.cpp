@@ -568,13 +568,43 @@ void printAllCoursesSorted(const HashTable& table) {
     sortCoursesAlphanumerically(allCourses);
 
     // Display the sorted course list
-    cout << "Here is a sample schedule:" << endl;
+    cout << "Here is a sample schedule:\n" << endl;
 
     for (const Course& course : allCourses) {
         printCourseInfo(course);
     }
 
     cout << endl; // Add blank line for separation before menu redisplays
+}
+
+/**
+ * Function: Search Course in Hash Table
+ * Purpose: Efficiently finds a course using hash table lookup
+ * Input: table - hash table to search, courseNumber - course to find,
+ *        foundCourse - reference to Course object to populate if found
+ * Output: true if course found, false otherwise
+ * Complexity: Average O(1), worst case O(n) if many collisions
+ */
+bool searchCourse(const HashTable& table, const string& courseNumber, Course& foundCourse) {
+    if (courseNumber.empty()) {
+        return false;
+    }
+
+    // Calculate hash index
+    int index = hashFunction(courseNumber, table.capacity);
+
+    // Search through chain at this index
+    HashNode* current = table.buckets[index];
+
+    while (current != nullptr) {
+        if (current->course.courseNumber == courseNumber) {
+            foundCourse = current->course;
+            return true;
+        }
+        current = current->next;
+    }
+
+    return false; // Course not found
 }
 
 /**
