@@ -608,6 +608,39 @@ bool searchCourse(const HashTable& table, const string& courseNumber, Course& fo
 }
 
 /**
+ * Function: Print Prerequisites
+ * Purpose: Displays all prerequisites for a course using hash table lookups
+ * Input: course - Course object whose prerequisites to display,
+ *        table - hash table for prerequisite lookups
+ * Output: Prints prerequisite course information or "No prerequisites required"
+ */
+void printPrerequisites(const Course& course, const HashTable& table) {
+    if (course.prerequisites.size() == 0) {
+        cout << "No prerequisites required" << endl;
+        return;
+    }
+
+    cout << "Prerequisites: ";
+
+    for (size_t i = 0; i < course.prerequisites.size(); i++) {
+        Course prereqCourse;
+        if (searchCourse(table, course.prerequisites[i], prereqCourse)) {
+            cout << prereqCourse.courseNumber << ", " << prereqCourse.name;
+        }
+        else {
+            cout << "Warning: Prerequisite " << course.prerequisites[i] << " not found";
+        }
+
+        // Add comma separator between prerequisites (except for last one)
+        if (i < course.prerequisites.size() - 1) {
+            cout << "; ";
+        }
+    }
+
+    cout << endl;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
