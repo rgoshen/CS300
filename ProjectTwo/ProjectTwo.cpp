@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <iomanip>
 
 using namespace std;
 
@@ -328,6 +329,86 @@ double getLoadFactor(HashTable table) {
         return 0.0;
     }
     return (double)table.size / (double)table.capacity;
+}
+
+/**
+ * Function: Display Hash Table Statistics
+ * Purpose: Provides detailed statistics about hash table performance
+ * Input: table - hash table to analyze
+ * Output: Collision statistics, distribution analysis, performance metrics
+ */
+void displayHashTableStats(const HashTable& table) {
+    cout << "\n=== Hash Table Performance Statistics ===" << endl;
+    cout << "Total courses: " << table.size << endl;
+    cout << "Table capacity: " << table.capacity << endl;
+    cout << "Load factor: " << fixed << setprecision(3) << getLoadFactor(table) << endl;
+
+    // Analyze collision distribution
+    int emptyBuckets = 0;
+    int maxChainLength = 0;
+    int totalCollisions = 0;
+    int bucketsWithCollisions = 0;
+
+    for (int i = 0; i < table.capacity; i++) {
+        int chainLength = 0;
+        HashNode* current = table.buckets[i];
+
+        if (current == nullptr) {
+            emptyBuckets++;
+        }
+        else {
+            // Count chain length
+            while (current != nullptr) {
+                chainLength++;
+                current = current->next;
+            }
+
+            // Track collision statistics
+            if (chainLength > 1) {
+                totalCollisions += (chainLength - 1);
+                bucketsWithCollisions++;
+            }
+
+            if (chainLength > maxChainLength) {
+                maxChainLength = chainLength;
+            }
+        }
+    }
+
+    // Calculate percentages
+    double emptyPercentage = (emptyBuckets * 100.0) / table.capacity;
+    double collisionPercentage = (bucketsWithCollisions * 100.0) / table.capacity;
+
+    cout << "Empty buckets: " << emptyBuckets << " (" << fixed << setprecision(1)
+        << emptyPercentage << "%)" << endl;
+    cout << "Buckets with collisions: " << bucketsWithCollisions << " ("
+        << fixed << setprecision(1) << collisionPercentage << "%)" << endl;
+    cout << "Maximum chain length: " << maxChainLength << endl;
+    cout << "Total collisions: " << totalCollisions << endl;
+
+    // Calculate average search operations
+    if (table.size > 0) {
+        double avgSearchOps = (double)(table.size + totalCollisions) / table.size;
+        cout << "Average search operations: " << fixed << setprecision(2) << avgSearchOps << endl;
+    }
+
+    // Performance assessment
+    cout << "\nPerformance Assessment:" << endl;
+    if (getLoadFactor(table) <= 0.7) {
+        cout << "Load factor is optimal (<= 0.7)" << endl;
+    }
+    else {
+        cout << "Load factor is high (> 0.7) - consider resizing" << endl;
+    }
+
+    if (maxChainLength <= 3) {
+        cout << "Collision chains are manageable (<= 3)" << endl;
+    }
+    else {
+        cout << "Some collision chains are long (> 3)" << endl;
+    }
+
+    cout << "=========================================" << endl;
 }
 
 /**
@@ -838,6 +919,9 @@ void menuOption1(const string& filename, HashTable& table) {
     cout << "Number of courses loaded: " << table.size << endl;
     cout << "Hash table capacity: " << table.capacity << endl;
     cout << "Current load factor: " << getLoadFactor(table) << endl;
+
+    // Display detailed hash table statistics
+    displayHashTableStats(table);
 }
 
 /**
