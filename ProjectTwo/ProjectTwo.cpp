@@ -213,6 +213,41 @@ bool validatePrerequisites(vector<string> allLines) {
     return true;
 }
 
+
+
+/**
+ * Function: Validate Entire File
+ * Purpose: Orchestrates all file validation steps
+ * Input: lines - all lines read from file
+ * Output: true if entire file is valid, false if any validation fails
+ */
+bool validateFile(vector<string> lines) {
+    if (lines.size() == 0) {
+        cout << "Error: No valid lines found in file" << endl;
+        return false;
+    }
+
+    // Step 1: Check that all lines can be parsed and have valid format
+    for (string line : lines) {
+        vector<string> tokens;
+        if (!parseLine(line, tokens)) {
+            cout << "Error: Unable to parse line '" << line << "'" << endl;
+            return false;
+        }
+
+        if (!validateLineFormat(tokens, line)) {
+            return false;
+        }
+    }
+
+    // Step 2: Check that all prerequisites exist as courses
+    if (!validatePrerequisites(lines)) {
+        return false;
+    }
+
+    return true;
+}
+
 /**
  * Trims leading/trailing whitespace and quotes from filename
  */
@@ -333,74 +368,23 @@ void menuOption1(const string& filename) {
 
     vector<string> lines;
 
-    // Attempt to read file lines
-    if (readFileLines(filename, lines)) {
-        cout << "File read successfully!" << endl;
-        cout << "Number of lines read: " << lines.size() << endl;
-        cout << "\nParsing and validating CSV data:" << endl;
-        cout << "=================================" << endl;
-
-        bool allLinesValid = true;
-
-        // Test parsing and validation for each line
-        for (int i = 0; i < lines.size(); i++) {
-            cout << "\nLine " << (i + 1) << ": " << lines[i] << endl;
-
-            vector<string> tokens;
-            if (parseLine(lines[i], tokens)) {
-                cout << "  Parsed into " << tokens.size() << " tokens:" << endl;
-                for (int j = 0; j < tokens.size(); j++) {
-                    cout << "    Token " << j << ": '" << tokens[j] << "'" << endl;
-                }
-
-                // Test validation
-                if (validateLineFormat(tokens, lines[i])) {
-                    cout << "  VALID: Line format is correct" << endl;
-                }
-                else {
-                    cout << "  INVALID: Line format has errors" << endl;
-                    allLinesValid = false;
-                }
-            }
-            else {
-                cout << "  ERROR: Failed to parse this line" << endl;
-                allLinesValid = false;
-            }
-        }
-
-        cout << "\n==================================" << endl;
-        if (allLinesValid) {
-            cout << "SUCCESS: All lines passed format validation!" << endl;
-
-            // Test prerequisite validation
-            cout << "\nTesting prerequisite validation:" << endl;
-            cout << "================================" << endl;
-            if (validatePrerequisites(lines)) {
-                cout << "SUCCESS: All prerequisites are valid!" << endl;
-            }
-            else {
-                cout << "ERROR: Some prerequisites are invalid" << endl;
-                allLinesValid = false;
-            }
-        }
-        else {
-            cout << "ERROR: Some lines failed validation" << endl;
-        }
-
-        cout << "\n==================================" << endl;
-        if (allLinesValid) {
-            cout << "SUCCESS: File passed all validation checks!" << endl;
-        }
-        else {
-            cout << "ERROR: File has validation issues" << endl;
-        }
-
-        // TODO: Create course objects and load into hash table
-        cout << "\nData structure loaded with file: " << filename << endl;
+    // Step 1: Read file contents
+    if (!readFileLines(filename, lines)) {
+        return;
     }
-    else {
+
+    // Step 2: Validate file format and prerequisites
+    if (!validateFile(lines)) {
         cout << "Failed to load courses from file. Please check the file format and try again." << endl;
+        return;
     }
+
+    cout << "File validation successful!" << endl;
+    cout << "Number of valid courses: " << lines.size() << endl;
+
+    // TODO: Step 3: Create course objects and insert into hash table
+
+    cout << "Data structure loaded with file: " << filename << endl;
 }
 
 /**
