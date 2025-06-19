@@ -29,9 +29,9 @@ struct HashNode {
  */
 struct HashTable {
     vector<HashNode*> buckets; // Array of pointers to hash nodes
-    int size;                  // Current number of courses stored
-    int capacity;              // Current number of buckets
-    double maxLoadFactor;      // Maximum load factor before resize (0.7)
+    int size = 0;                  // Current number of courses stored
+    int capacity= 0;              // Current number of buckets
+    double maxLoadFactor=0.7;      // Maximum load factor before resize (0.7)
 };
 
 /**
@@ -201,7 +201,7 @@ bool validatePrerequisites(vector<string> allLines) {
 
         // Check prerequisites (tokens 2 and beyond)
         if (tokens.size() > 2) { // has prerequisites
-            for (int i = 2; i < tokens.size(); i++) {
+            for (size_t i = 2; i < tokens.size(); i++) {
                 string prerequisite = tokens[i];
                 if (!prerequisite.empty() && !courseExists(prerequisite, allLines)) {
                     cout << "Error: Prerequisite '" << prerequisite << "' in course '" << tokens[0] << "' does not exist as a course" << endl;
@@ -265,7 +265,7 @@ bool createCourseObject(string line, Course& course) {
     course.prerequisites.clear();
 
     // Add prerequisites (tokens 2 and beyond)
-    for (int i = 2; i < tokens.size(); i++) {
+    for (size_t i = 2; i < tokens.size(); i++) {
         if (!tokens[i].empty()) {
             course.prerequisites.push_back(tokens[i]);
         }
@@ -309,7 +309,7 @@ int hashFunction(string courseNumber, int capacity) {
     int hash = 0;
     int prime = 31; // Common prime for polynomial hash
 
-    for (int i = 0; i < courseNumber.length(); i++) {
+    for (size_t i = 0; i < courseNumber.length(); i++) {
         char c = courseNumber[i];
         hash = hash * prime + (int)c;
     }
@@ -555,9 +555,9 @@ void merge(vector<Course>& courses, int left, int middle, int right) {
     }
 
     // Merge the temporary arrays back into courses[left..right]
-    int i = 0;    // Initial index of first subarray
-    int j = 0;    // Initial index of second subarray
-    int k = left; // Initial index of merged subarray
+    size_t i = 0;    // Initial index of first subarray
+    size_t j = 0;    // Initial index of second subarray
+    size_t k = left; // Initial index of merged subarray
 
     while (i < leftArray.size() && j < rightArray.size()) {
         // Compare course numbers for alphabetical ordering
