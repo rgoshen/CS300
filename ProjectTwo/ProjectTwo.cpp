@@ -430,6 +430,154 @@ void insertCourseIntoTable(HashTable& table, Course course) {
 }
 
 /**
+ * Collects all courses from the hash table into a vector for sorting
+ * Traverses all buckets and collision chains to gather every course
+ * @param table The hash table containing course data
+ * @return Vector containing all courses from the hash table
+ */
+vector<Course> collectAllCourses(const HashTable& table) {
+    vector<Course> allCourses;
+
+    // Traverse each bucket in the hash table
+    for (int i = 0; i < table.capacity; i++) {
+        HashNode* current = table.buckets[i];
+
+        // Traverse the collision chain at this bucket
+        while (current != nullptr) {
+            allCourses.push_back(current->course);
+            current = current->next;
+        }
+    }
+
+    return allCourses;
+}
+
+/**
+ * Merges two sorted subarrays into one sorted array
+ * @param courses Vector containing the subarrays
+ * @param left Start of first subarray
+ * @param middle End of first subarray (start of second is middle+1)
+ * @param right End of second subarray
+ */
+void merge(vector<Course>& courses, int left, int middle, int right) {
+    // Create temporary arrays for the two subarrays
+    vector<Course> leftArray;
+    vector<Course> rightArray;
+
+    // Copy data to temporary arrays
+    for (int i = left; i <= middle; i++) {
+        leftArray.push_back(courses[i]);
+    }
+
+    for (int j = middle + 1; j <= right; j++) {
+        rightArray.push_back(courses[j]);
+    }
+
+    // Merge the temporary arrays back into courses[left..right]
+    int i = 0;    // Initial index of first subarray
+    int j = 0;    // Initial index of second subarray
+    int k = left; // Initial index of merged subarray
+
+    while (i < leftArray.size() && j < rightArray.size()) {
+        // Compare course numbers for alphabetical ordering
+        if (leftArray[i].courseNumber <= rightArray[j].courseNumber) {
+            courses[k] = leftArray[i];
+            i++;
+        }
+        else {
+            courses[k] = rightArray[j];
+            j++;
+        }
+        k++;
+    }
+
+    // Copy remaining elements of leftArray, if any
+    while (i < leftArray.size()) {
+        courses[k] = leftArray[i];
+        i++;
+        k++;
+    }
+
+    // Copy remaining elements of rightArray, if any
+    while (j < rightArray.size()) {
+        courses[k] = rightArray[j];
+        j++;
+        k++;
+    }
+}
+
+/**
+ * Recursive merge sort implementation
+ * Divides the array into halves and recursively sorts each half
+ * @param courses Vector to sort
+ * @param left Starting index of the subarray
+ * @param right Ending index of the subarray
+ */
+void mergeSort(vector<Course>& courses, int left, int right) {
+    if (left < right) {
+        int middle = left + (right - left) / 2; // Avoid potential overflow
+
+        // Recursively sort first and second halves
+        mergeSort(courses, left, middle);
+        mergeSort(courses, middle + 1, right);
+
+        // Merge the sorted halves
+        merge(courses, left, middle, right);
+    }
+}
+
+/**
+ * Sorts a vector of courses alphanumerically by course number
+ * Uses merge sort algorithm for O(n log n) performance
+ * @param courses Vector of Course objects to sort (modified in place)
+ */
+void sortCoursesAlphanumerically(vector<Course>& courses) {
+    if (courses.size() <= 1) {
+        return; // Already sorted or empty
+    }
+
+    mergeSort(courses, 0, courses.size() - 1);
+}
+
+/**
+ * Function: Print Single Course Info
+ * Purpose: Displays basic course information in required format
+ * Input: course - Course object to display
+ * Output: Prints "courseNumber, courseName" to console
+ */
+void printCourseInfo(const Course& course) {
+    cout << course.courseNumber << ", " << course.name << endl;
+}
+
+/**
+ * Function: Print All Courses Sorted
+ * Purpose: Displays all courses from hash table in alphanumeric order
+ * Input: table - hash table containing courses
+ * Output: Displays all courses sorted by course number
+ */
+void printAllCoursesSorted(const HashTable& table) {
+    if (table.size == 0) {
+        cout << "No courses loaded. Please load data first using option 1." << endl;
+        return;
+    }
+
+    // Collect all courses from hash table
+    vector<Course> allCourses = collectAllCourses(table);
+
+    // Sort the courses alphanumerically
+    sortCoursesAlphanumerically(allCourses);
+
+    // Display the sorted course list
+    cout << "Here is a sample schedule:" << endl;
+
+    for (const Course& course : allCourses) {
+        printCourseInfo(course);
+    }
+
+    cout << endl; // Add blank line for separation before menu redisplays
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -515,6 +663,7 @@ string getValidFilename() {
  * Displays the main menu options
  */
 void displayMenu() {
+    cout << endl;
     cout << "1. Load Data Structure." << endl;
     cout << "2. Print Course List." << endl;
     cout << "3. Print Course." << endl;
@@ -545,7 +694,7 @@ string getMenuChoice() {
  * Output: Hash table is populated with validated course data
  */
 void menuOption1(const string& filename, HashTable& table) {
-    cout << "Loading data structure..." << endl;
+    cout << "\nLoading data structure..." << endl;
 
     vector<string> lines;
 
@@ -578,18 +727,13 @@ void menuOption1(const string& filename, HashTable& table) {
 }
 
 /**
- * Handles menu option 2 - Print Course List
+ * Function: Menu Option 2 - Print Course List
+ * Purpose: Prints all courses in alphanumeric order with error handling
+ * Input: table - hash table containing courses
+ * Output: All courses displayed in alphanumeric order by course number
  */
-void menuOption2() {
-    cout << "Here is a sample schedule:" << endl;
-    cout << "CSCI100, Introduction to Computer Science" << endl;
-    cout << "CSCI101, Introduction to Programming in C++" << endl;
-    cout << "CSCI200, Data Structures" << endl;
-    cout << "CSCI301, Advanced Programming in C++" << endl;
-    cout << "CSCI300, Introduction to Algorithms" << endl;
-    cout << "CSCI350, Operating Systems" << endl;
-    cout << "CSCI400, Large Software Development" << endl;
-    cout << "MATH201, Discrete Mathematics" << endl;
+void menuOption2(const HashTable& table) {
+    printAllCoursesSorted(table);
 }
 
 /**
@@ -637,7 +781,7 @@ int main() {
             menuOption1(filename, courseTable);
         }
         else if (choice == "2") {
-            menuOption2();
+            menuOption2(courseTable);
         }
         else if (choice == "3") {
             menuOption3();
