@@ -550,10 +550,10 @@ void printCourseInfo(const Course& course) {
 }
 
 /**
- * Function: Print All Courses Sorted
- * Purpose: Displays all courses from hash table in alphanumeric order
+ * Function: Print All Courses Sorted with Pagination
+ * Purpose: Displays all courses from hash table in alphanumeric order with pagination
  * Input: table - hash table containing courses
- * Output: Displays all courses sorted by course number
+ * Output: Displays all courses sorted by course number, 20 per page
  */
 void printAllCoursesSorted(const HashTable& table) {
     if (table.size == 0) {
@@ -567,13 +567,36 @@ void printAllCoursesSorted(const HashTable& table) {
     // Sort the courses alphanumerically
     sortCoursesAlphanumerically(allCourses);
 
-    // Display the sorted course list
+    // Display the sorted course list with pagination
     cout << "Here is a sample schedule:\n" << endl;
 
-    for (const Course& course : allCourses) {
-        printCourseInfo(course);
+    int pageSize = 10;
+    int currentPage = 1;
+    int totalPages = (allCourses.size() + pageSize - 1) / pageSize; // Ceiling division
+
+    for (size_t i = 0; i < allCourses.size(); i++) {
+        // Print page header at the start of each page
+        if (i % pageSize == 0) {
+            if (i > 0) {
+                // Add blank line before pagination prompt
+                cout << endl;
+                cout << "Press Enter to continue to page " << (currentPage + 1)
+                    << " of " << totalPages << "..." << endl;
+                cin.get(); // Wait for Enter key
+                cout << endl; // Add blank line after user input
+                currentPage++; // Move to next page after user input
+            }
+
+            if (totalPages > 1) {
+                cout << "--- Page " << currentPage << " of " << totalPages << " ---" << endl;
+                cout << endl; // Add blank line after page header
+            }
+        }
+
+        printCourseInfo(allCourses[i]);
     }
 
+    cout << "\nTotal courses displayed: " << allCourses.size() << endl;
     cout << endl; // Add blank line for separation before menu redisplays
 }
 
