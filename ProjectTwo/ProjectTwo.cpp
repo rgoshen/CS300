@@ -430,6 +430,29 @@ void insertCourseIntoTable(HashTable& table, Course course) {
 }
 
 /**
+ * Collects all courses from the hash table into a vector for sorting
+ * Traverses all buckets and collision chains to gather every course
+ * @param table The hash table containing course data
+ * @return Vector containing all courses from the hash table
+ */
+vector<Course> collectAllCourses(const HashTable& table) {
+    vector<Course> allCourses;
+
+    // Traverse each bucket in the hash table
+    for (int i = 0; i < table.capacity; i++) {
+        HashNode* current = table.buckets[i];
+
+        // Traverse the collision chain at this bucket
+        while (current != nullptr) {
+            allCourses.push_back(current->course);
+            current = current->next;
+        }
+    }
+
+    return allCourses;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
