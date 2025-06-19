@@ -625,6 +625,7 @@ string getValidFilename() {
  * Displays the main menu options
  */
 void displayMenu() {
+    cout << endl;
     cout << "1. Load Data Structure." << endl;
     cout << "2. Print Course List." << endl;
     cout << "3. Print Course." << endl;
@@ -655,7 +656,7 @@ string getMenuChoice() {
  * Output: Hash table is populated with validated course data
  */
 void menuOption1(const string& filename, HashTable& table) {
-    cout << "Loading data structure..." << endl;
+    cout << "\nLoading data structure..." << endl;
 
     vector<string> lines;
 
@@ -688,8 +689,10 @@ void menuOption1(const string& filename, HashTable& table) {
 }
 
 /**
- * Handles menu option 2 - Print Course List
- * Displays all courses in alphanumeric order
+ * Function: Menu Option 2 - Print Course List
+ * Purpose: Prints all courses in alphanumeric order with error handling
+ * Input: table - hash table containing courses
+ * Output: All courses displayed in alphanumeric order by course number
  */
 void menuOption2(const HashTable& table) {
     // Check if any courses are loaded
@@ -705,7 +708,7 @@ void menuOption2(const HashTable& table) {
     sortCoursesAlphanumerically(allCourses);
 
     // Display the sorted course list
-    cout << "Here is a sample schedule:" << endl;
+    cout << "Here is a sample schedule:\n" << endl;
 
     for (const Course& course : allCourses) {
         cout << course.courseNumber << ", " << course.name << endl;
