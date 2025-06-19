@@ -249,6 +249,33 @@ bool validateFile(vector<string> lines) {
 }
 
 /**
+ * Function: Create Single Course Object
+ * Purpose: Creates a Course object from a validated line of data
+ * Input: line - validated line from file, course - reference to Course object to populate
+ * Output: true if course was created successfully, false otherwise
+ */
+bool createCourseObject(string line, Course& course) {
+    vector<string> tokens;
+    if (!parseLine(line, tokens) || tokens.size() < 2) {
+        return false; // Invalid line format
+    }
+
+    // Set required fields
+    course.courseNumber = tokens[0];
+    course.name = tokens[1];
+    course.prerequisites.clear();
+
+    // Add prerequisites (tokens 2 and beyond)
+    for (int i = 2; i < tokens.size(); i++) {
+        if (!tokens[i].empty()) {
+            course.prerequisites.push_back(tokens[i]);
+        }
+    }
+
+    return true;
+}
+
+/**
  * Trims leading/trailing whitespace and quotes from filename
  */
 string trimFilename(const string& filename) {
@@ -382,7 +409,30 @@ void menuOption1(const string& filename) {
     cout << "File validation successful!" << endl;
     cout << "Number of valid courses: " << lines.size() << endl;
 
-    // TODO: Step 3: Create course objects and insert into hash table
+    // Step 3: Test creating course objects
+    cout << "\nCreating course objects:" << endl;
+    cout << "========================" << endl;
+
+    for (int i = 0; i < lines.size(); i++) {
+        Course newCourse;
+        if (createCourseObject(lines[i], newCourse)) {
+            cout << "Course " << (i + 1) << ": " << newCourse.courseNumber << " - " << newCourse.name << endl;
+            if (newCourse.prerequisites.size() > 0) {
+                cout << "  Prerequisites: ";
+                for (int j = 0; j < newCourse.prerequisites.size(); j++) {
+                    cout << newCourse.prerequisites[j];
+                    if (j < newCourse.prerequisites.size() - 1) cout << ", ";
+                }
+                cout << endl;
+            }
+            else {
+                cout << "  No prerequisites" << endl;
+            }
+        }
+        else {
+            cout << "Warning: Failed to create course object from line " << (i + 1) << endl;
+        }
+    }
 
     cout << "Data structure loaded with file: " << filename << endl;
 }
